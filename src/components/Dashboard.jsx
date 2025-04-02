@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import '../styles/ResponsiveDashboard.css'; // Import the responsive CSS file
+
+import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
 import axios from 'axios';
 import ConversationsList from './ConversationsList';
 import ConversationArea from './ConversationArea';
 import RightPanel from './RightPanel';
 import TopPanel from './TopPanel';
 import '../styles/Dashboard.css'; // Main dashboard styles
-import '../styles/ResponsiveDashboard.css'; // Add this new CSS file for responsive styles
 
 // Simple Burger Icon component (or use an icon library)
 const BurgerIcon = ({ onClick, className }) => (
@@ -23,46 +24,46 @@ function Dashboard({ token, onLogout }) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // State for panel visibility and screen size
+    // --- START: State for panel visibility and screen size ---
+    // Initialize based on current window width
     const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 721);
-    const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(!isSmallScreen); // Open by default on large screens
-    const [isRightPanelOpen, setIsRightPanelOpen] = useState(!isSmallScreen); // Open by default on large screens
+    // Default panels to closed on small screens, open on large screens
+    const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(window.innerWidth >= 721);
+    const [isRightPanelOpen, setIsRightPanelOpen] = useState(window.innerWidth >= 721);
+    // --- END: State ---
 
 
-    // --- Existing useEffect and functions (fetchConversations, handlePdfUpload, etc.) ---
-    // Keep your existing functions like fetchConversations, handlePdfUpload,
-    // handleNewChat, handleSelectConversation, handleSendQuestion, handleSubmitFeedback
-
-    // Add window resize listener
+    // --- START: Window resize listener ---
     const checkScreenSize = useCallback(() => {
-        const small = window.innerWidth < 721;
-        setIsSmallScreen(small);
-        // Automatically open panels if resizing back to large screen, close if resizing to small
-        if (!small) {
-            setIsLeftPanelOpen(true);
-            setIsRightPanelOpen(true);
-        } else {
-             // Optional: close panels when resizing to small screen if they were open
-             // setIsLeftPanelOpen(false);
-             // setIsRightPanelOpen(false);
+        const currentlySmall = window.innerWidth < 721;
+        // Check if the screen size state *needs* to change
+        if (currentlySmall !== isSmallScreen) {
+            setIsSmallScreen(currentlySmall);
+            // Explicitly set panel states based on the *new* screen size state
+            // If it just became small (currentlySmall is true), close panels (!currentlySmall is false)
+            // If it just became large (currentlySmall is false), open panels (!currentlySmall is true)
+            setIsLeftPanelOpen(!currentlySmall);
+            setIsRightPanelOpen(!currentlySmall);
         }
-    }, []);
+    }, [isSmallScreen]); // Re-run checker only when isSmallScreen state changes
 
     useEffect(() => {
-        window.addEventListener('resize', checkScreenSize);
-        checkScreenSize(); // Initial check
+        // Run the check once on mount in case the initial state is wrong
+        checkScreenSize();
 
+        window.addEventListener('resize', checkScreenSize);
         // Cleanup listener on component unmount
         return () => window.removeEventListener('resize', checkScreenSize);
-    }, [checkScreenSize]);
+    }, [checkScreenSize]); // Depend on the memoized checker function
+    // --- END: Window resize listener ---
 
 
-    // Toggle functions for panels
+    // --- START: Toggle functions for panels (only work on small screens) ---
     const toggleLeftPanel = () => {
         if (isSmallScreen) {
-            setIsLeftPanelOpen(!isLeftPanelOpen);
-            // Optionally close the right panel if the left one is opened on small screens
-            if (!isLeftPanelOpen && isRightPanelOpen) {
+            setIsLeftPanelOpen(prev => !prev); // Toggle current state
+            // Close right panel if opening left on small screen
+            if (!isLeftPanelOpen && isRightPanelOpen) { // Check *before* state update finishes
                 setIsRightPanelOpen(false);
             }
         }
@@ -70,27 +71,31 @@ function Dashboard({ token, onLogout }) {
 
     const toggleRightPanel = () => {
         if (isSmallScreen) {
-            setIsRightPanelOpen(!isRightPanelOpen);
-             // Optionally close the left panel if the right one is opened on small screens
-             if (!isRightPanelOpen && isLeftPanelOpen) {
+            setIsRightPanelOpen(prev => !prev); // Toggle current state
+             // Close left panel if opening right on small screen
+             if (!isRightPanelOpen && isLeftPanelOpen) { // Check *before* state update finishes
                 setIsLeftPanelOpen(false);
             }
         }
     };
+     // --- END: Toggle functions ---
 
-    // --- Fetch Conversations ---
+    // --- Fetch Conversations (Using useCallback) ---
     const fetchConversations = useCallback(async () => {
+        if (isLoading) return;
         setIsLoading(true);
+        setError('');
         try {
           const response = await axios.get('/api/conversations', {
             headers: { Authorization: `Bearer ${token}` }
           });
-          setConversations(response.data);
-          if (response.data.length > 0 && !currentConversation) { // Select first only if none selected
-            // Don't automatically select on mobile if panels start closed
-             if (!isSmallScreen) {
-                 setCurrentConversation(response.data[0]);
-             }
+          const fetchedConversations = response.data || [];
+          setConversations(fetchedConversations);
+          // Select first conversation only if none selected AND on a large screen initially
+          if (fetchedConversations.length > 0 && !currentConversation && window.innerWidth >= 721) {
+             setCurrentConversation(fetchedConversations[0]);
+          } else if (fetchedConversations.length === 0) {
+            setCurrentConversation(null);
           }
         } catch (err) {
           setError('Failed to fetch conversations');
@@ -101,20 +106,18 @@ function Dashboard({ token, onLogout }) {
         } finally {
           setIsLoading(false);
         }
-      }, [token, onLogout, isSmallScreen, currentConversation]); // Add dependencies
+      }, [token, onLogout, currentConversation, isLoading]); // Correct dependencies
 
     useEffect(() => {
       fetchConversations();
-    }, [fetchConversations]); // Use the memoized fetchConversations
+      // Fetch conversations on mount or if token changes
+    }, [token, fetchConversations]); // Use memoized fetchConversations
 
-    // --- Other Handlers (handlePdfUpload, handleNewChat, etc.) ---
-    // Ensure these functions remain largely the same, but consider UX on small screens
-    // e.g., after handleNewChat or handleSelectConversation, maybe close the left panel on small screens.
-
+    // --- Other Handlers (handlePdfUpload, handleNewChat, etc. - Include previous versions) ---
       const handlePdfUpload = async (file) => {
         const formData = new FormData();
         formData.append('pdf', file);
-
+        setError('');
         try {
           const response = await axios.post('/api/pdfs', formData, {
             headers: {
@@ -127,7 +130,7 @@ function Dashboard({ token, onLogout }) {
             uploadDate: new Date().toISOString(),
             ...response.data
           });
-          // Potentially create a new conversation automatically or switch view
+          if(isSmallScreen) setIsRightPanelOpen(false);
         } catch (err) {
           setError('Failed to upload PDF');
           console.error('Error uploading PDF:', err);
@@ -135,181 +138,106 @@ function Dashboard({ token, onLogout }) {
       };
 
       const handleNewChat = () => {
+        setError('');
         const newConversation = {
           id: `temp-${Date.now()}`,
           title: 'New Conversation',
           timestamp: new Date().toISOString(),
           messages: []
         };
-
-        setConversations([newConversation, ...conversations]);
+        setConversations(prev => [newConversation, ...prev]);
         setCurrentConversation(newConversation);
-        if(isSmallScreen) setIsLeftPanelOpen(false); // Close panel after action on small screens
+        setCurrentPdf(null);
+        if(isSmallScreen) setIsLeftPanelOpen(false);
       };
 
       const handleSelectConversation = (conversation) => {
-        setCurrentConversation(conversation);
-         if(isSmallScreen) setIsLeftPanelOpen(false); // Close panel after action on small screens
+         setError('');
+         if (currentConversation?.id !== conversation.id) {
+             setCurrentConversation(conversation);
+         }
+         if(isSmallScreen) setIsLeftPanelOpen(false);
       };
 
       const handleSendQuestion = async (question) => {
-        if (!currentConversation) return;
+        if (!currentConversation || !question.trim()) return;
+        setError('');
+        const tempMessageId = `temp-msg-${Date.now()}`;
+        const tempMessage = { id: tempMessageId, content: question, type: 'question', timestamp: new Date().toISOString() };
+        const conversationIdToUpdate = currentConversation.id;
 
-        const tempMessage = {
-          id: `temp-${Date.now()}`,
-          content: question,
-          type: 'question',
-          timestamp: new Date().toISOString()
-        };
-
-        // Find the conversation to update (handle temp IDs)
-        const conversationIdToUpdate = currentConversation.id.toString().startsWith('temp-') ? currentConversation.id : parseInt(currentConversation.id, 10);
-
-        // Optimistically update UI
-         const updatedConversation = {
-           ...currentConversation,
-           messages: [...(currentConversation.messages || []), tempMessage]
-         };
-        setCurrentConversation(updatedConversation); // Update current view immediately
-
-        // Update the main list as well
-        setConversations(prevConversations =>
-            prevConversations.map(c =>
-              c.id === conversationIdToUpdate ? updatedConversation : c
-            )
-          );
-
+        setCurrentConversation(prev => ({ ...prev, messages: [...(prev?.messages || []), tempMessage] }));
+        setConversations(prevList => prevList.map(c => c.id === conversationIdToUpdate ? { ...c, messages: [...(c.messages || []), tempMessage] } : c ));
 
         try {
           const response = await axios.post('/api/questions', {
-            conversationId: currentConversation.id.toString().startsWith('temp-') ? null : currentConversation.id, // Send null for temp IDs
+            conversationId: conversationIdToUpdate.toString().startsWith('temp-') ? null : conversationIdToUpdate,
             question,
             documentId: currentPdf?.id
-          }, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          }, { headers: { Authorization: `Bearer ${token}` } });
 
-           // API response includes the full updated conversation or just the new message/answer details
-           const answerMessage = {
-            id: response.data.messageId || `server-${Date.now()}`, // Use ID from response if available
-            content: response.data.answer,
-            type: 'answer',
-            timestamp: new Date().toISOString(),
-            citations: response.data.citations || []
-          };
-
-          // Use conversationId from response if it was a new chat
+          const answerMessage = { id: response.data.messageId || `server-ans-${Date.now()}`, content: response.data.answer, type: 'answer', timestamp: new Date().toISOString(), citations: response.data.citations || [] };
           const finalConversationId = response.data.conversationId || conversationIdToUpdate;
 
-          // Update the specific conversation in the state with the server response
-          setConversations(prevConversations =>
-            prevConversations.map(c => {
-              if (c.id === conversationIdToUpdate || (c.id.toString().startsWith('temp-') && finalConversationId === response.data.conversationId)) {
-                 // Replace temp message with actual question if API provides it, otherwise keep temp
-                 const messagesWithoutTemp = (updatedConversation.messages || []).filter(m => m.id !== tempMessage.id);
-                return {
-                  ...c,
-                  id: finalConversationId, // Update ID if it was temporary
-                  messages: [...messagesWithoutTemp, /* optional: real question data if returned */ answerMessage]
-                };
-              }
-              return c;
-            })
-          );
-
-          // Update the currently viewed conversation state
-          setCurrentConversation(prev => ({
-                ...prev,
-                id: finalConversationId,
-                 messages: [...(prev.messages || []).filter(m => m.id !== tempMessage.id), /* optional: real question data */ answerMessage]
-          }));
-
-
-        } catch (err) {
-          setError('Failed to get answer');
-          console.error('Error sending question:', err);
-           // Revert optimistic update on error if desired
-           setConversations(prevConversations =>
-            prevConversations.map(c =>
-              c.id === conversationIdToUpdate ? { ...c, messages: (c.messages || []).filter(m => m.id !== tempMessage.id) } : c
-            )
-          );
-          setCurrentConversation(prev => ({ ...prev, messages: (prev.messages || []).filter(m => m.id !== tempMessage.id) }));
-        }
-      };
-
-
-       const handleSubmitFeedback = async (feedback) => {
-         if (!currentConversation || !currentConversation.messages || currentConversation.messages.length === 0) {
-            setError('Cannot submit feedback without a conversation or messages.');
-            return;
-        }
-        const lastMessage = currentConversation.messages[currentConversation.messages.length - 1];
-
-        try {
-          await axios.post('/api/feedback', {
-            feedback,
-            conversationId: currentConversation?.id.toString().startsWith('temp-') ? null : currentConversation.id,
-            lastMessageId: lastMessage?.id.toString().startsWith('temp-') || lastMessage?.id.toString().startsWith('server-') ? null : lastMessage?.id // Handle temp/server IDs
-          }, {
-            headers: { Authorization: `Bearer ${token}` }
+          setCurrentConversation(prev => {
+            const messagesWithoutTemp = (prev?.messages || []).filter(m => m.id !== tempMessageId);
+            return { ...prev, id: finalConversationId, messages: [...messagesWithoutTemp, answerMessage] };
           });
-          // Show success message (optional)
-          alert('Feedback submitted!');
-           if(isSmallScreen) setIsRightPanelOpen(false); // Close panel after action on small screens
+          setConversations(prevList => prevList.map(c => {
+            if (c.id === conversationIdToUpdate || (c.id.toString().startsWith('temp-') && finalConversationId === response.data.conversationId)) {
+              const messagesWithoutTemp = (c.messages || []).filter(m => m.id !== tempMessageId);
+              return { ...c, id: finalConversationId, messages: [...messagesWithoutTemp, answerMessage] };
+            } return c;
+          }));
         } catch (err) {
-          setError('Failed to submit feedback');
-          console.error('Error submitting feedback:', err);
+          setError('Failed to get answer'); console.error('Error sending question:', err);
+          setCurrentConversation(prev => ({ ...prev, messages: (prev?.messages || []).filter(m => m.id !== tempMessageId) }));
+          setConversations(prevList => prevList.map(c => c.id === conversationIdToUpdate ? { ...c, messages: (c.messages || []).filter(m => m.id !== tempMessageId) } : c ));
         }
       };
+
+      const handleSubmitFeedback = async (feedback) => {
+         if (!currentConversation || !feedback.trim()) { setError('Please select a conversation and enter feedback.'); return; }
+         const lastAnswerMessage = [...(currentConversation.messages || [])].reverse().find(m => m.type === 'answer');
+         setError('');
+         try {
+           await axios.post('/api/feedback', {
+             feedback,
+             conversationId: currentConversation.id.toString().startsWith('temp-') ? null : currentConversation.id,
+             lastMessageId: lastAnswerMessage?.id.toString().startsWith('server-') ? null : lastAnswerMessage?.id
+           }, { headers: { Authorization: `Bearer ${token}` } });
+           alert('Feedback submitted!');
+            if(isSmallScreen) setIsRightPanelOpen(false);
+         } catch (err) { setError('Failed to submit feedback'); console.error('Error submitting feedback:', err); }
+       };
 
 
     // --- Loading State ---
     if (isLoading && conversations.length === 0) {
-        return <div className="loading">Loading...</div>;
+        return <div className="loading">Loading initial data...</div>;
     }
 
     // --- Render Logic ---
     return (
         <div className={`dashboard ${isSmallScreen ? 'small-screen' : ''}`}>
-            {/* Pass toggle functions and panel states to TopPanel if needed */}
             <TopPanel onUploadPdf={handlePdfUpload} onLogout={onLogout} />
-
             <div className="main-content">
-                {/* Left Burger Menu (only on small screens) */}
-                {isSmallScreen && <BurgerIcon onClick={toggleLeftPanel} className="left-burger" />}
-
-                {/* Left Panel (Conversations List) */}
+                 {isSmallScreen && <BurgerIcon onClick={toggleLeftPanel} className="left-burger" />}
+                {/* Apply open/closed class based on state */}
                 <div className={`left-panel-container ${isLeftPanelOpen ? 'open' : 'closed'}`}>
-                    <ConversationsList
-                        conversations={conversations}
-                        currentConversation={currentConversation}
-                        onSelectConversation={handleSelectConversation}
-                        onNewChat={handleNewChat}
-                    />
+                    <ConversationsList conversations={conversations} currentConversation={currentConversation} onSelectConversation={handleSelectConversation} onNewChat={handleNewChat} isLoading={isLoading && conversations.length > 0}/>
                 </div>
-
-                {/* Main Conversation Area */}
                 <div className="conversation-area-container">
-                    <ConversationArea
-                        conversation={currentConversation}
-                        onSendQuestion={handleSendQuestion}
-                    />
+                     {!currentConversation && (<div className="no-conversation-selected">{conversations.length > 0 ? 'Select or start a conversation.' : 'Start a new conversation.'}</div>)}
+                    <ConversationArea key={currentConversation?.id || 'new'} conversation={currentConversation} onSendQuestion={handleSendQuestion}/>
                 </div>
-
-                {/* Right Panel (Feedback/Document Info) */}
+                 {/* Apply open/closed class based on state */}
                  <div className={`right-panel-container ${isRightPanelOpen ? 'open' : 'closed'}`}>
-                    <RightPanel
-                        onSubmitFeedback={handleSubmitFeedback}
-                        currentPdf={currentPdf}
-                    />
+                    <RightPanel key={currentPdf?.id || currentConversation?.id || 'default'} onSubmitFeedback={handleSubmitFeedback} currentPdf={currentPdf} conversationId={currentConversation?.id}/>
                 </div>
-
-                 {/* Right Burger Menu (only on small screens) */}
                  {isSmallScreen && <BurgerIcon onClick={toggleRightPanel} className="right-burger" />}
             </div>
-
-            {error && <div className="error-toast">{error}</div>}
+            {error && (<div className="error-toast" onClick={() => setError('')}>{error} <span style={{ cursor: 'pointer', marginLeft: '15px', fontWeight: 'bold'}}>X</span></div>)}
         </div>
     );
 }
