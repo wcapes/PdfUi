@@ -1,0 +1,126 @@
+/* src/styles/ResponsiveDashboard.css */
+
+/* Styles applied only when screen is 720px or less */
+@media (max-width: 720px) {
+
+    .dashboard.small-screen .main-content {
+        position: relative; /* Needed for absolute positioning of panels */
+        overflow: hidden; /* Prevent panels sliding out */
+    }
+
+    /* Burger Menu Base Styles */
+    .burger-menu {
+        display: flex; /* Initially hidden on large screens, shown via .small-screen */
+        flex-direction: column;
+        justify-content: space-around;
+        width: 30px;
+        height: 25px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        z-index: 10; /* Ensure it's above panels */
+        position: absolute; /* Position relative to main-content */
+        top: 10px;
+    }
+
+    .burger-menu span {
+        width: 100%;
+        height: 3px;
+        background: #333;
+        border-radius: 10px;
+        transition: all 0.3s linear;
+    }
+
+    .burger-menu.left-burger {
+        left: 10px;
+    }
+
+     .burger-menu.right-burger {
+        right: 10px;
+    }
+
+    /* Panel Container Base Styles for Small Screens */
+    .left-panel-container,
+    .right-panel-container {
+        position: absolute;
+        top: 0;
+        bottom: 0; /* Take full height of main-content */
+        background-color: #f8f9fa; /* Match panel background */
+        z-index: 5; /* Below burger menu, above conversation area */
+        transition: transform 0.3s ease-in-out;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Add shadow for overlay effect */
+         height: 100%; /* Ensure full height */
+         overflow-y: auto; /* Allow scrolling within panel if needed */
+    }
+
+     /* Specific widths (match original CSS or adjust) */
+    .left-panel-container {
+        width: 250px; /* Match ConversationsList width */
+        transform: translateX(-100%); /* Start hidden off-screen left */
+        border-right: 1px solid #e0e0e0;
+    }
+
+     .right-panel-container {
+        width: 300px; /* Match RightPanel width */
+        right: 0; /* Align to the right */
+        transform: translateX(100%); /* Start hidden off-screen right */
+        border-left: 1px solid #e0e0e0;
+        box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1); /* Shadow on the left */
+    }
+
+    /* 'Open' state slides panels into view */
+    .left-panel-container.open {
+        transform: translateX(0);
+    }
+
+    .right-panel-container.open {
+        transform: translateX(0);
+    }
+
+    /* Ensure panels inside containers take full height */
+     .left-panel-container .conversations-list,
+     .right-panel-container .right-panel {
+         height: 100%;
+         width: 100%; /* Ensure they fill their container */
+     }
+
+    /* Adjust Conversation Area */
+    .conversation-area-container {
+        /* Takes remaining space, no changes needed if panels overlay */
+         width: 100%;
+         height: 100%;
+    }
+}
+
+/* Styles for large screens (optional overrides if needed) */
+@media (min-width: 721px) {
+    .burger-menu {
+        display: none; /* Hide burgers on large screens */
+    }
+
+    /* Ensure panels are displayed normally */
+    .left-panel-container,
+    .right-panel-container {
+       position: static; /* Override absolute positioning */
+       transform: none; /* Override transform */
+       height: auto; /* Let content determine height */
+       box-shadow: none;
+       overflow-y: visible;
+    }
+
+     .left-panel-container {
+        width: 250px; /* Restore original width */
+        border-right: 1px solid #e0e0e0;
+     }
+     .right-panel-container {
+        width: 300px; /* Restore original width */
+        border-left: 1px solid #e0e0e0;
+     }
+
+     .left-panel-container .conversations-list,
+     .right-panel-container .right-panel {
+         /* Reset potentially overridden styles */
+         height: auto;
+     }
+}

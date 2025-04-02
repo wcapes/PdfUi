@@ -1,11 +1,77 @@
+/* src/styles/Dashboard.css - Example (Ensure it matches your large screen layout) */
 .dashboard {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
-  
-  .main-content {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden; /* Prevent main scroll */
+}
+
+.main-content {
+  display: flex;
+  flex: 1; /* Takes remaining height */
+  overflow: hidden; /* Prevent content overflow */
+   position: relative; /* Added for potential absolute positioning context */
+}
+
+/* Default Panel Container Styles (Large Screen) */
+.left-panel-container {
+  width: 250px; /* Default width */
+  flex-shrink: 0; /* Prevent shrinking */
+  border-right: 1px solid #e0e0e0; /* From ConversationsList.css */
+  background-color: #f8f9fa; /* From ConversationsList.css */
+   display: flex; /* To contain the list properly */
+  flex-direction: column;
+}
+
+.conversation-area-container {
+  flex: 1; /* Takes up remaining space */
+  display: flex; /* To contain the area properly */
+  flex-direction: column;
+  overflow: hidden; /* Contains internal scrolling */
+}
+
+.right-panel-container {
+  width: 300px; /* Default width */
+  flex-shrink: 0; /* Prevent shrinking */
+  border-left: 1px solid #e0e0e0; /* From RightPanel.css */
+  background-color: #f8f9fa; /* From RightPanel.css */
+  display: flex; /* To contain the panel properly */
+  flex-direction: column;
+}
+
+/* Ensure inner components fill their containers */
+.left-panel-container .conversations-list,
+.conversation-area-container .conversation-area,
+.right-panel-container .right-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+   flex: 1; /* Allow components like ConversationArea to fill space */
+}
+
+
+/* --- Add your existing styles below --- */
+
+/* Error Toast Style (from original App.css - moved here for dashboard context) */
+.error-toast {
+position: fixed;
+bottom: 20px;
+left: 50%;
+transform: translateX(-50%);
+background-color: #f44336;
+color: white;
+padding: 12px 24px;
+border-radius: 4px;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+z-index: 1000;
+}
+
+/* Loading Style (from original App.css - moved here for dashboard context) */
+.loading {
+display: flex;
+justify-content: center;
+align-items: center;
+height: 100vh;
+font-size: 1.5rem;
+color: #666;
+}
