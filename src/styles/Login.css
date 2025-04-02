@@ -1,0 +1,74 @@
+/* Full-page background image */
+body, html {
+    height: 100%;
+    margin: 0;
+  }
+  
+  .login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: url('../images/login.jpg') no-repeat center center fixed;
+    background-size: cover;
+  }
+  
+  /* Login card styling */
+  .login-card {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+  }
+  
+  /* Ensure all input fields are aligned */
+  .form-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  /* Password input container */
+  .password-input-container {
+    position: relative;
+    display: flex;
+    width: 100%;
+    align-items: center;
+  }
+  
+  .password-input-container input {
+    padding-right: 40px; /* Ensure space for the eye icon */
+  }
+  
+  /* Eye icon styling */
+  .password-toggle-icon {
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 16px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+  }
+  
+  .password-toggle-icon:hover {
+    color: #333;
+  }
+  

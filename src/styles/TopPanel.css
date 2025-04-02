@@ -1,0 +1,52 @@
+.top-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    height: 60px;
+  }
+  
+  .logo {
+    display: flex;
+    align-items: center;
+  }
+  
+  .logo img {
+    height: 24px;
+    margin-right: 8px;
+  }
+  
+  .logo span {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .actions {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .upload-btn, .logout-btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .upload-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+  }
+  
+  .logout-btn {
+    background-color: white;
+    color: #333;
+    border: 1px solid #ddd;
+  }
