@@ -7,11 +7,12 @@ import fetchData from '../general.js';
 function Login({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [companycode, setCompanyCode] = useState('');
+  const [companycode, setCompanyCode] = useState('NegZero');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-    
+  const [showCompanyCode, setShowCompanyCode] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -69,19 +70,23 @@ function Login({ onLogin }) {
               </div>
             </div>
           </div>
-          {error && <div className="error-message">{error}</div>}
-          <div className="form-group">
-            <label>Company Code</label>
-            <input 
-              type="text" 
-              value={companycode} 
-              onChange={(e) => setCompanyCode(e.target.value)} 
-              required 
-            />
-          </div>
+
+          {showCompanyCode && (
+            <div className="form-group">
+              <label>Company Code</label>
+              <input
+                type="text"
+                value={companycode}
+                onChange={(e) => setCompanyCode(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
           <button type="submit" disabled={isLoading}>
             {isLoading ? 'Logging in...' : 'Login'}
           </button>
+
         </form>
       </div>
     </div>
